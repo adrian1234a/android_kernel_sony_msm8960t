@@ -484,7 +484,7 @@ static int tcp_v6_send_synack(struct sock *sk,
 	if (!dst)
 		goto done;
 
-	skb = tcp_make_synack(sk, dst, req, rvp);
+	skb = tcp_make_synack(sk, dst, req, rvp, NULL);
 
 	if (skb) {
 		__tcp_v6_send_check(skb, &treq->loc_addr, &treq->rmt_addr);
@@ -1003,7 +1003,7 @@ static struct sock *tcp_v6_hnd_req(struct sock *sk,struct sk_buff *skb)
 				   &ipv6_hdr(skb)->saddr,
 				   &ipv6_hdr(skb)->daddr, inet6_iif(skb));
 	if (req)
-		return tcp_check_req(sk, skb, req, prev);
+		return tcp_check_req(sk, skb, req, prev, false);
 
 	nsk = __inet6_lookup_established(sock_net(sk), &tcp_hashinfo,
 			&ipv6_hdr(skb)->saddr, th->source,
@@ -1195,6 +1195,7 @@ have_isn:
 	    want_cookie)
 		goto drop_and_free;
 
+	tcp_rsk(req)->listener = NULL;
 	inet6_csk_reqsk_queue_hash_add(sk, req, TCP_TIMEOUT_INIT);
 	return 0;
 
