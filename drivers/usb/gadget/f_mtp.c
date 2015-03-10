@@ -456,10 +456,12 @@ static ssize_t mtp_read(struct file *fp, char __user *buf,
 	struct usb_request *req;
 	int r = count, xfer;
 	int ret = 0;
+	size_t len;
 
 	DBG(cdev, "mtp_read(%d)\n", count);
 
-	if (count > mtp_rx_req_len)
+	len = usb_ep_align_maybe(cdev->gadget, dev->ep_out, count);
+	if (len > mtp_rx_req_len)
 		return -EINVAL;
 
 	/* we will block until we're online */
@@ -489,7 +491,7 @@ static ssize_t mtp_read(struct file *fp, char __user *buf,
 requeue_req:
 	/* queue a request */
 	req = dev->rx_req[0];
-	req->length = count;
+	req->length = len;
 	dev->rx_done = 0;
 	ret = usb_ep_queue(dev->ep_out, req, GFP_KERNEL);
 	if (ret < 0) {
